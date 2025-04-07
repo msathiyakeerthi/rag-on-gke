@@ -1,43 +1,186 @@
-# How to Deploy a Retrieval-Augmented Generation (RAG) Application on GKE
 
-Imagine teaching an AI to answer questions about Netflix shows with pinpoint accuracy. That's the power of Retrieval-Augmented Generation (RAG) - a technique that supercharges large language models (LLMs) by pairing them with a searchable knowledge base.
+# 🚀 How to Deploy a Retrieval-Augmented Generation (RAG) Application on GKE
 
-In this guide, I'll walk you through deploying a RAG application on Google Kubernetes Engine (GKE) - step-by-step, like a classroom lab. By the end, you'll have a working chat interface powered by mistral-7b and a Netflix dataset. Let's get started!
+Imagine teaching an AI to answer questions about Netflix shows with pinpoint accuracy.  
+That’s the power of **Retrieval-Augmented Generation (RAG)**—a technique that boosts large language models (LLMs) by pairing them with a searchable knowledge base.
 
-## What is RAG?
+In this guide, you'll deploy a full RAG application on **Google Kubernetes Engine (GKE)** using:
 
-RAG makes LLMs smarter by giving them real-time context from a dataset. Instead of retraining the model (which is costly and slow), RAG uses a vector database to retrieve relevant info - like Netflix show descriptions - and feeds it to the LLM.
+- 🤖 **Mistral-7B** for LLM responses  
+- 🧠 **Cloud SQL + pgvector** for vector search  
+- ⚙️ **Ray**, **Terraform**, **Helm**, and **JupyterHub** for orchestration  
 
-**Why it matters:** It's perfect for domain-specific knowledge or fast-changing content.
+By the end, you’ll have a working **chat interface** that answers questions about Netflix shows.
 
-## Our Setup
+---
 
-- **AI Model:** mistral-7b for answering questions
-- **Vector Database:** Cloud SQL with pgvector for storing embeddings
-- **Tools:** A Ray cluster, Jupyter notebook, and chat UI - all on GKE
+## 🧠 Step 1: What is RAG?
 
-## Step-by-Step Guide
+**RAG** makes LLMs smarter by retrieving relevant context from a dataset before answering a question.
 
-### Step 1: Gather Your Tools
+Instead of retraining the model, RAG:
+- Retrieves relevant data (e.g., Netflix show descriptions) from a vector DB
+- Feeds it into the LLM along with the user query
 
-Before we begin, install the essentials:
-- `kubectl`: Control Kubernetes clusters
-- `Terraform`: Automate infrastructure setup
-- `Helm`: Manage Kubernetes apps
-- `gcloud`: Work with Google Cloud
+**Tech Stack:**
+- **Model**: `mistral-7b`
+- **Database**: Cloud SQL + `pgvector`
+- **Pipeline**: Ray, JupyterHub, chat UI on GKE
 
-### Step 2: Understand the Architecture
+---
 
-Here's how everything fits together:
-- A Jupyter notebook processes the Netflix dataset from Kaggle
-- A Ray cluster turns data into vector embeddings and stores them in pgvector
-- A chat UI retrieves context, adds it to your question, and sends it to mistral-7b
+## 🔧 Step 2: Gather Your Tools
 
-### Step 3: Provision Infrastructure with Terraform
+Install the following:
 
-Terraform is our blueprint for spinning up GKE, databases, and networking.
+- `kubectl` – Kubernetes CLI  
+- `terraform` – Infrastructure as Code  
+- `helm` – Kubernetes package manager  
+- `gcloud` – Google Cloud SDK  
 
-1. **Get the Code:**
-   ```bash
-   git clone https://github.com/GoogleCloudPlatform/ai-on-gke.git
-   cd ai-on-gke/applications/rag
+> Download each from their official site.
+
+---
+
+## 🧭 Step 3: Architecture Overview
+
+```text
++----------------+         +-------------+         +----------------------+
+| Jupyter Notebook|  -->   | Ray Cluster |  -->    | Cloud SQL + pgvector |
++----------------+         +-------------+         +----------------------+
+       |                                                |
+       |                                                v
+       |                                   +---------------------------+
+       +-------------------------------→   |   Chat UI + Mistral-7B    |
+                                           +---------------------------+
+```
+
+This is a **modular, cloud-native, scalable** setup.
+
+---
+
+## 🏗️ Step 4: Deploy Infrastructure with Terraform
+
+### Clone the Repo:
+```bash
+git clone https://github.com/GoogleCloudPlatform/ai-on-gke.git
+cd ai-on-gke/applications/rag
+```
+
+### Configure `workloads.tfvars`:
+```hcl
+project_id     = "your-gcp-project-id"
+location       = "us-central1"
+cluster_name   = "rag-cluster"
+bucket_name    = "my-rag-bucket-123"
+```
+
+### Deploy:
+```bash
+terraform init
+terraform apply --var-file workloads.tfvars
+```
+
+> Confirm with `yes`. Takes ~10 minutes.  
+> ⚠️ Don’t delete `terraform.tfstate`!
+
+---
+
+## 📦 Step 5: Process Netflix Data
+
+### Connect to GKE:
+```bash
+export NAMESPACE=rag
+export CLUSTER_NAME=rag-cluster
+export CLUSTER_LOCATION=us-east4
+
+gcloud container clusters get-credentials $CLUSTER_NAME --location=$CLUSTER_LOCATION
+```
+
+### Port-forward JupyterHub:
+```bash
+kubectl port-forward service/proxy-public -n $NAMESPACE 8081:80 &
+```
+
+Then open [http://localhost:8081](http://localhost:8081)  
+Login with `admin` and the password from:
+```bash
+terraform output jupyterhub_password
+```
+
+### Load Notebook:
+In JupyterHub:  
+**File > Open From URL** → Paste:
+```
+https://raw.githubusercontent.com/GoogleCloudPlatform/ai-on-gke/main/applications/rag/example_notebooks/rag-kaggle-ray-sql-interactive.ipynb
+```
+
+### Add Kaggle Credentials:
+Upload your `kaggle.json`, then update the first notebook cell with your Kaggle username and API key.
+
+### Run the Notebook:
+- Downloads the Netflix dataset
+- Converts it to vector embeddings via Ray
+- Stores embeddings in `pgvector`
+
+⏱️ Takes ~10 minutes.
+
+---
+
+## 💬 Step 6: Launch the Chat UI
+
+### Port-forward the UI:
+```bash
+kubectl port-forward service/rag-frontend -n $NAMESPACE 8080:8080 &
+```
+
+Open [http://localhost:8080](http://localhost:8080)  
+Try:  
+> _"What’s a good sci-fi show on Netflix?"_
+
+---
+
+## 🧹 Step 7: Clean Up
+
+To remove everything:
+```bash
+terraform destroy --var-file workloads.tfvars
+```
+
+> Confirm with `yes`.  
+> 🔧 If the network isn’t deleted, remove it manually from the Google Cloud Console.
+
+---
+
+## 🛠️ Step 8: Troubleshooting
+
+- **Notebook stuck?**  
+  ```bash
+  kubectl port-forward -n $NAMESPACE service/ray-cluster-kuberay-head-svc 8265:8265
+  ```
+  Visit [http://localhost:8265](http://localhost:8265)
+
+- **Model fails to load?**  
+  Ensure **L4 GPU quota** is available in your selected region.
+
+- **Hugging Face model access error?**  
+  Add your Hugging Face token as a Kubernetes secret. See the [GitHub guide](https://github.com/GoogleCloudPlatform/ai-on-gke).
+
+---
+
+## 🎯 Why This Project Matters
+
+This project combines:
+
+- **Infrastructure-as-Code** (Terraform)
+- **Scalable processing** (Ray on GKE)
+- **Vector search + LLM inference** (pgvector + Mistral)
+
+🔁 Easily swap the Netflix dataset for **internal documents**, **product manuals**, or **customer support data**.
+
+---
+
+## 🙋‍♂️ Let’s Talk!
+
+Have you built something similar with RAG or GKE?  
+Feel free to share your thoughts, open an issue, or fork this project!
