@@ -54,6 +54,7 @@ Install the following:
        +-------------------------------→   |   Chat UI + Mistral-7B    |
                                            +---------------------------+
 ```
+![image](https://github.com/user-attachments/assets/c2a58bb0-8812-410d-a548-cf6a0ea92e55)
 
 This is a **modular, cloud-native, scalable** setup.
 
