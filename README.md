@@ -54,7 +54,6 @@ Install the following:
        +-------------------------------→   |   Chat UI + Mistral-7B    |
                                            +---------------------------+
 ```
-![image](https://github.com/user-attachments/assets/c2a58bb0-8812-410d-a548-cf6a0ea92e55)
 
 This is a **modular, cloud-native, scalable** setup.
 
@@ -185,3 +184,42 @@ This project combines:
 
 Have you built something similar with RAG or GKE?  
 Feel free to share your thoughts, open an issue, or fork this project!
+
+---
+
+## 🧱 System Architecture Overview
+
+![RAG Architecture on GKE](./architecture.png)
+
+This architecture shows a **Retrieval-Augmented Generation (RAG)** application deployed on **Google Kubernetes Engine (GKE)** using **Autopilot mode**.
+
+### 🔹 Serving Subsystem (Left - Green)
+
+Handles real-time user interaction and inference:
+
+- **Chat Interface**: Accepts user queries and shows results.
+- **Frontend Server**: Orchestrates semantic search and prompt creation.
+- **Inference Server (TGI)**: Hosts `mistral-7b` or `gemma` for LLM responses.
+- **Responsible AI Service**: Ensures safe and fair outputs.
+- **Identity-Aware Proxy**: Secures application access.
+- **Monitoring, Logging, Analytics**: For observability.
+
+### 🔹 Embedding Subsystem (Right - Blue)
+
+Generates and stores vector embeddings:
+
+- **GKE Cluster (Autopilot)**: Runs Ray and embedding services.
+- **Ray Job & Ray Data**: Preprocess and shard input datasets.
+- **Cloud Storage**: Stores raw input data.
+- **Embedding Service**: Generates pgvector embeddings.
+- **Cloud SQL with pgvector**: Performs semantic search.
+
+### 🔁 Flow Summary:
+
+1. User sends a query via chat.
+2. Frontend performs semantic search in Cloud SQL.
+3. Adds relevant context to query.
+4. Sends contextual prompt to inference server.
+5. LLM response is displayed to the user.
+
+---
