@@ -6,7 +6,7 @@ That’s the power of **Retrieval-Augmented Generation (RAG)**—a technique tha
 
 In this guide, you'll deploy a full RAG application on **Google Kubernetes Engine (GKE)** using:
 
-- 🤖 **Mistral-7B** for LLM responses  
+- 🤖 **Gemma-7B** for LLM responses  
 - 🧠 **Cloud SQL + pgvector** for vector search  
 - ⚙️ **Ray**, **Terraform**, **Helm**, and **JupyterHub** for orchestration  
 
@@ -23,7 +23,7 @@ Instead of retraining the model, RAG:
 - Feeds it into the LLM along with the user query
 
 **Tech Stack:**
-- **Model**: `mistral-7b`
+- **Model**: `Gemma-7b`
 - **Database**: Cloud SQL + `pgvector`
 - **Pipeline**: Ray, JupyterHub, chat UI on GKE
 
@@ -56,7 +56,7 @@ Handles real-time user interaction and inference:
 
 - **Chat Interface**: Accepts user queries and shows results.
 - **Frontend Server**: Orchestrates semantic search and prompt creation.
-- **Inference Server (TGI)**: Hosts `mistral-7b` or `gemma` for LLM responses.
+- **Inference Server (TGI)**: Hosts `Gemma-7b` or `gemma` for LLM responses.
 - **Responsible AI Service**: Ensures safe and fair outputs.
 - **Identity-Aware Proxy**: Secures application access.
 - **Monitoring, Logging, Analytics**: For observability.
@@ -201,7 +201,7 @@ This project combines:
 
 - **Infrastructure-as-Code** (Terraform)
 - **Scalable processing** (Ray on GKE)
-- **Vector search + LLM inference** (pgvector + Mistral)
+- **Vector search + LLM inference** (pgvector + Gemma)
 
 🔁 Easily swap the Netflix dataset for **internal documents**, **product manuals**, or **customer support data**.
 
